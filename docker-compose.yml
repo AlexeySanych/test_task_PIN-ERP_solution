@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/nginx.Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - app
+
+  db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      -  dbdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: products
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: secret_password
+    container_name: products_db
+
+  redis:
+    image: redis:latest
+    restart: always
+    volumes:
+      - redisdata:/data
+    container_name: products_redis
+
+  app:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/php.Dockerfile
+    container_name: products_app
+    depends_on:
+      - db
+      - redis
+
+  composer:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/composer.Dockerfile
+    volumes:
+      - ./app:/var/www
+
+volumes:
+  dbdata:
+  redisdata:
